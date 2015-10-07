@@ -6,7 +6,7 @@
 
 
 //test2();
-//test();
+test();
 //f2014();
 
 function test2() {
@@ -21,9 +21,8 @@ function test() {
     include_once "74efaa97a6418a337854/class-addrewriterules.php";
     include_once "7cabd3ffa10f4e6885fd/class-addpage.php";
 
-    //register_activation_hook(__FILE__, 'flush_rewrite_rules');
-    //$templates = AP_TemplateSearcher::getTemplates();
-    //$loader = AP_Loader::getInstance($templates);
+    $templates = AP_TemplateSearcher::getTemplates();
+    $loader = AP_Loader::getInstance($templates);
 
     //add_action('template_redirect', array('AP_Loader', 'query_vars'));
     //add_action('template_redirect', array('AP_Loader', 'template_redirect'));
@@ -67,31 +66,23 @@ function test() {
 }
 
 
-
-
-
-
-
 /**
  * https://firegoby.jp/archives/5309
  */
 function f2014() {
-    // プラグインの有効化時/無効化時の処理を登録
+// プラグインの有効化時/無効化時の処理を登録
     register_activation_hook( __FILE__ , 'my_activation_callback' );
     register_deactivation_hook( __FILE__ , 'my_deactivation_callback' );
+
+// 他のプラグインや管理者の操作によってflush_rewrite_rules()が発火した際にこのプラグイン用のrewrite ruleを再登録する
+    add_action( 'delete_option', 'my_delete_option', 10, 1 );
+
+
     add_action('init', 'my_init');
-
-    function my_init() {
-        add_rewrite_endpoint('hoge', EP_ROOT);
-        add_rewrite_endpoint('events', EP_ROOT);
-    }
-
-
     add_filter('query_vars', 'my_query_vars');
 
     function my_query_vars($vars) {
-        $vars[] = 'hoge';
-        $vars[] = 'events';
+        $vars[] = 'piyo';
         return $vars;
     }
 
@@ -99,27 +90,16 @@ function f2014() {
 
     function my_template_redirect() {
         global $wp_query;
-        if (isset($wp_query->query['events'])) {
-            //$template = get_stylesheet_directory().'/pages/page-hoge.php';
-            //apply_filters( "page_template", $template );
-            //if ( $template = apply_filters( 'template_include', $template ) ) {
-            //include($template);
-        //}
-            echo 'event';
-            exit; // WordPressの処理を止める！
-        }
-        if (isset($wp_query->query['hoge'])) {
-            $template = get_stylesheet_directory().'/pages/page-hoge.php';
-            apply_filters( "page_template", $template );
-            if ( $template = apply_filters( 'template_include', $template ) ) {
-                include($template);
-            }
+        if (isset($wp_query->query['piyo'])) {
+            // ここでイベントカレンダー的なものを出力
+            echo 'いべんとからんだーだおらおらー';
             exit; // WordPressの処理を止める！
         }
     }
 
-// 他のプラグインや管理者の操作によってflush_rewrite_rules()が発火した際にこのプラグイン用のrewrite ruleを再登録する
-    add_action( 'delete_option', 'my_delete_option', 10, 1 );
+    function my_init() {
+        add_rewrite_endpoint('piyo', EP_ROOT);
+    }
 
 // 有効化時の処理
     function my_activation_callback() {
@@ -148,7 +128,7 @@ function f2014() {
          * register_activation_hook()発火時にはまだis_plugin_active()の戻り値はtrueのままなのでget_option()の値で評価する必要がある。
          */
         if ( 'rewrite_rules' === $option && get_option('my_plugin_activated') ) {
-            add_rewrite_endpoint( 'events', EP_ROOT );
+            add_rewrite_endpoint( 'piyo', EP_ROOT );
         }
     }
 }

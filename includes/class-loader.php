@@ -39,7 +39,7 @@ class AP_Loader
         add_filter('query_vars', array(self::$instance, 'query_vars'));
         add_action('template_redirect', array(self::$instance, 'template_redirect'));
         // 他のプラグインや管理者の操作によってflush_rewrite_rules()が発火した際にこのプラグイン用のrewrite ruleを再登録する
-        add_action('delete_option', array(self::$instance, 'delete_option', 10, 1 ));
+        add_action('delete_option', array(self::$instance, 'delete_option'), 10, 1 );
 
 
         $className = __CLASS__;
@@ -47,33 +47,37 @@ class AP_Loader
 
     }
 
-    public function init()
+    public function init($arg)
     {
         foreach($this->templates as $template) {
             add_rewrite_endpoint($template->getTemplateSlug(), EP_ROOT);
         }
-        add_rewrite_endpoint('evnets', EP_ROOT);
+        //add_rewrite_endpoint('evnets', EP_ROOT);
+
+        // Flushing the rewrite rules is an expensive operation, there are tutorials and examples that suggest executing it on the 'init' hook. This is bad practice.
+        // https://codex.wordpress.org/Function_Reference/flush_rewrite_rules
+
+        // todo: option化
+        flush_rewrite_rules();
     }
 
 
     public function query_vars($vars) {
-        $templates = AP_TemplateSearcher::getTemplates();
-        //foreach($this->templates as $template) {
-        foreach($templates as $template) {
-            var_dump($template->getTemplateSlug());
-            //$vars[] = $template->getTemplateSlug();
+        //$templates = AP_TemplateSearcher::getTemplates();
+        //foreach($templates as $template) {
+        foreach($this->templates as $template) {
+            $vars[] = $template->getTemplateSlug();
         }
-        //$vars[] = 'hoge';
-        //$vars[] = 'events';
         return $vars;
     }
 
 
-    public static function template_redirect() {
+    public function template_redirect() {
         global $wp_query;
-        $templates = AP_TemplateSearcher::getTemplates();
-        var_dump($wp_query);
-        foreach($templates as $template) {
+        //$templates = AP_TemplateSearcher::getTemplates();
+        //var_dump($wp_query);
+        //foreach($templates as $template) {
+        foreach($this->templates as $template) {
             if (isset($wp_query->query[$template->getTemplateSlug()])) {
                 $template = $template->path;
                 apply_filters("page_template", $template);
@@ -113,7 +117,9 @@ class AP_Loader
          * register_activation_hook()発火時にはまだis_plugin_active()の戻り値はtrueのままなのでget_option()の値で評価する必要がある。
          */
         if ( 'rewrite_rules' === $option && get_option('my_plugin_activated') ) {
-            add_rewrite_endpoint( 'events', EP_ROOT );
+            foreach($this->templates as $template) {
+                add_rewrite_endpoint($template->getTemplateSlug(), EP_ROOT);
+            }
         }
     }
 

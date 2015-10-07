@@ -14,7 +14,9 @@ add_action('init',  function()
     foreach($templates as $template) {
         add_rewrite_endpoint($template->getTemplateSlug(), EP_ROOT);
     }
-    add_rewrite_endpoint('evnets', EP_ROOT);
+    //add_rewrite_endpoint('hoge',  EP_ROOT);
+    //add_rewrite_endpoint('evnets', EP_ROOT);
+    flush_rewrite_rules(); // 毎度呼び出すとやばそう
 });
 
 
@@ -22,20 +24,18 @@ add_filter('query_vars', function ($vars) {
     $templates = AP_TemplateSearcher::getTemplates();
     //foreach($this->templates as $template) {
     foreach($templates as $template) {
-        var_dump($template->getTemplateSlug());
+        //var_dump($template->getTemplateSlug());
         //$vars[] = $template->getTemplateSlug();
     }
-    //$vars[] = 'hoge';
+    $vars[] = 'hoge';
     //$vars[] = 'events';
     return $vars;
 });
 
-var_dump('hoge'); exit;
 
 add_action('template_redirect', function() {
     global $wp_query;
     $templates = AP_TemplateSearcher::getTemplates();
-    var_dump($wp_query);
     foreach($templates as $template) {
         if (isset($wp_query->query[$template->getTemplateSlug()])) {
             $template = $template->path;
@@ -75,6 +75,7 @@ add_action('delete_option', function($option){
      * register_activation_hook()発火時にはまだis_plugin_active()の戻り値はtrueのままなのでget_option()の値で評価する必要がある。
      */
     if ( 'rewrite_rules' === $option && get_option('my_plugin_activated') ) {
+        add_rewrite_endpoint( 'hoge', EP_ROOT );
         add_rewrite_endpoint( 'events', EP_ROOT );
     }
 });
